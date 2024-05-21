@@ -126,6 +126,8 @@ def draw(color=(125, 255, 0), thickness=2):
         cv2.waitKey(1)
 
 
+
+
 #   Step 4
 alignment_thread = Thread(target=face_alignment)
 alignment_thread.start()

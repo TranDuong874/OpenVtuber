@@ -140,7 +140,7 @@ if __name__ == '__main__':
 
     cap = cv2.VideoCapture(sys.argv[1])
     color = (125, 255, 125)
-
+    
     while True:
         ret, frame = cap.read()
 
@@ -156,7 +156,6 @@ if __name__ == '__main__':
                 cv2.circle(frame, tuple(p), 1, color, 1, cv2.LINE_AA)
 
         print(time.perf_counter() - start_time)
-
-        cv2.imshow("result", frame)
+        
         if cv2.waitKey(0) == ord('q'):
             break
