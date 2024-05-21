@@ -5,3 +5,5 @@ node_modules/
 *.mp4
 
 __pycache__
+
+/test-vid

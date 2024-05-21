@@ -99,6 +99,7 @@ class CoordinateAlignmentModel():
 
         return out @ iM.T  # dot product
 
+    #   Step 5
     def get_landmarks(self, image, detected_faces=None):
         """Predict the landmarks for each face present in the image.
 
@@ -118,12 +119,12 @@ class CoordinateAlignmentModel():
         for box in detected_faces:
             inp, M = self._preprocessing(image, box)
             out = self._inference(inp)
-            pred = self._postprocessing(out, M)
+            pred = self._postprocessing(out, M) # Prediction, dự đoán vị trí các điểm landmark
 
             # self._calibrate(pred, 1, skip=6)
             # yield self.pre_landmarks
 
-            yield pred
+            yield pred # Sử dụng lại giá trị cũ của out, inp dùng từ các lần gọi hàm trước
 
 
 if __name__ == '__main__':
@@ -151,7 +152,7 @@ if __name__ == '__main__':
         boxes, scores = fd.inference(frame)
 
         for pred in fa.get_landmarks(frame, boxes):
-            for p in np.round(pred).astype(np.int):
+            for p in np.round(pred).astype(np.int64):
                 cv2.circle(frame, tuple(p), 1, color, 1, cv2.LINE_AA)
 
         print(time.perf_counter() - start_time)
