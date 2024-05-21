@@ -56,8 +56,8 @@ class HeadPoseEstimator:
         axis *= size
         axis += center
 
-        axis = axis.astype(np.int)
-        tp_center = tuple(center.astype(np.int))
+        axis = axis.astype(np.int64)
+        tp_center = tuple(center.astype(np.int64))
 
         cv2.line(img, tp_center, tuple(axis[0]), (0, 0, 255), thickness)
         cv2.line(img, tp_center, tuple(axis[1]), (0, 255, 0), thickness)
@@ -90,7 +90,7 @@ def main(filename):
         bboxes, _ = fd.inference(frame)
 
         for pred in fa.get_landmarks(frame, bboxes):
-            for p in np.round(pred).astype(np.int):
+            for p in np.round(pred).astype(np.int64):
                 cv2.circle(frame, tuple(p), 1, color, 1, cv2.LINE_AA)
             face_center = np.mean(pred, axis=0)
             euler_angle = hp.get_head_pose(pred).flatten()

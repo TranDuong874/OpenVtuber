@@ -112,7 +112,7 @@
 				}
 			}
 
-			var modelFile = 'models/kizunaai/kizunaai.pmx';
+			var modelFile = 'models/kizunaai/SoraModel/SoraBasic.pmx';
 
 			helper = new MMDAnimationHelper({ afterglow: 0.0 });
 
@@ -135,9 +135,10 @@
 
 				var bones = physicsHelper.physics.mesh.skeleton.bones;
 
-				head = bones[8];
-				left_eye = bones[86];
-				right_eye = bones[88];
+				head = bones[13];
+				left_eye = bones[16];
+				right_eye = bones[17];
+			
 
 			}, onProgress, null);
 
@@ -185,14 +186,14 @@
 
 			var mouth_index, eye_index;
 
-			if (mouth > 0.6) mouth_index = 9;
-			else if (mouth > 0.4) mouth_index = 12;
-			else if (mouth > 0.2) mouth_index = 11;
+			if (mouth > 0.6) mouth_index = 23;
+			else if (mouth > 0.4) mouth_index = 30;
+			else if (mouth > 0.2) mouth_index = 29;
 
 			if (blink) {
-				if (blink[0] < 0.1 && blink[1] < 0.1) eye_index = 1;
-				else if (blink[0] < 0.1) eye_index = 4;
-				else if (blink[1] < 0.1) eye_index = 5;
+				if (blink[0] < 0.1 && blink[1] < 0.1) eye_index = 7;
+				else if (blink[0] < 0.1) eye_index = 8;
+				else if (blink[1] < 0.1) eye_index = 9;
 			}
 
 			if (mouth_index) {

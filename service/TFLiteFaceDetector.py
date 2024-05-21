@@ -72,7 +72,9 @@ class UltraLightFaceDetecion():
                       alpha=-1, beta=1, norm_type=cv2.NORM_MINMAX)
         return image_norm[None, ...]
 
-    def inference(self, img):
+    #   Step 3
+    #   Khoanh vùng khuôn mặt bằng box, trả về một list các box và điểm của mỗi box, chọn box có score cao nhất?
+    def inference(self, img): 
         # BGR image to tensor
         input_tensor = self._pre_processing(img)
 
