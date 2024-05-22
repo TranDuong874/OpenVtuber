@@ -51,6 +51,10 @@
 			requestAnimationFrame(() => animate(result));
 		});
 
+		socket.on('input_download', (input_video) => {
+
+		});
+
 		var clock = new THREE.Clock();
 
 		Ammo().then(function (AmmoLib) {

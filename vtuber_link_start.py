@@ -5,12 +5,14 @@ import service
 import cv2
 import sys
 import socketio
+import base64
 
 from threading import Thread
 from queue import Queue
 
 
-cap = cv2.VideoCapture(sys.argv[1])
+# cap = cv2.VideoCapture(sys.argv[1])
+cap = cv2.VideoCapture(0)
 
 fd = service.UltraLightFaceDetecion("weights/RFB-320.tflite",
                                     conf_threshold=0.98)
@@ -52,7 +54,6 @@ def face_alignment():
 #   Step 7
 def iris_localization(YAW_THD=45):
     sio = socketio.Client()
-
     sio.connect("http://127.0.0.1:6789", namespaces='/kizuna')  #   Connect đến server frontend (Model)
 
     while True:
@@ -105,12 +106,17 @@ def iris_localization(YAW_THD=45):
                              'eye': (theta.mean(), pha.mean()),
                              'mouth': mouth_open_percent,
                              'blink': (left_eye_status, right_eye_status)}
+            
+            
             sio.emit('result_data', result_string, namespace='/kizuna')
             upstream_queue.put((frame, landmarks, euler_angle))
             break
 
 
 def draw(color=(125, 255, 0), thickness=2):
+    sio = socketio.Client()
+    sio.connect("http://127.0.0.1:6789", namespaces='/kizuna')
+    
     while True:
         frame, landmarks, euler_angle = upstream_queue.get()
 
@@ -122,8 +128,17 @@ def draw(color=(125, 255, 0), thickness=2):
 
         frame = cv2.resize(frame, (960, 720))
 
+        #enconde a frame
+        retval, buffer = cv2.imencode('.jpg', frame)
+        jpg_as_text = base64.b64encode(buffer)
+    
+        sio.emit('input_data', jpg_as_text, namespace='/kizuna')
         cv2.imshow('result', frame)
-        cv2.waitKey(1)
+        
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+        
+    cv2.destroyAllWindows()
 
 
 

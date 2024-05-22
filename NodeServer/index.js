@@ -24,6 +24,13 @@ io.of('/kizuna').on('connection', (socket) => {
         }
     });
 
+    socket.on('input_data', (input) => {
+        if (input) {
+            socket.broadcast.emit('input_download', input);
+            // console.log('Receiving data')
+        }
+    });
+
     socket.on('disconnect', () => { console.log('a kizuna client disconnected') });
 });
 
