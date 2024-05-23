@@ -6,13 +6,23 @@ import cv2
 import sys
 import socketio
 import base64
+import os
+from threading import Thread, Event
+from queue import Queue
 
 from threading import Thread
 from queue import Queue
 
 
-# cap = cv2.VideoCapture(sys.argv[1])
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(sys.argv[1])
+# cap = cv2.VideoCapture(0)
+
+# Get the FPS of the input video
+fps = cap.get(cv2.CAP_PROP_FPS)
+width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+
+
 
 fd = service.UltraLightFaceDetecion("weights/RFB-320.tflite",
                                     conf_threshold=0.98)
@@ -27,12 +37,13 @@ box_queue = Queue(maxsize=QUEUE_BUFFER_SIZE)
 landmark_queue = Queue(maxsize=QUEUE_BUFFER_SIZE)
 iris_queue = Queue(maxsize=QUEUE_BUFFER_SIZE)
 upstream_queue = Queue(maxsize=QUEUE_BUFFER_SIZE)
+stop_event = Event()
 
 # ======================================================
 
 
 def face_detection():
-    while True:
+    while not stop_event.is_set():
         ret, frame = cap.read()
 
         if not ret:
@@ -41,15 +52,18 @@ def face_detection():
         #   Step 2
         face_boxes, _ = fd.inference(frame) #   Một list các face boxes
         box_queue.put((frame, face_boxes))  #   Frame và các frame boxes của nó
-
+    box_queue.put(None) #   Use none as sentinel value
 
 def face_alignment():
     while True:
+        item = box_queue.get()
+        if item is None:
+            break
         #Step 4
-        frame, boxes = box_queue.get() #    Load các frame và boxes ở trong hàng đợi
+        frame, boxes = item #    Load các frame và boxes ở trong hàng đợi
         landmarks = fa.get_landmarks(frame, boxes) #    Tính toán các landmark dựa vào tham số frame và boxes
         landmark_queue.put((frame, landmarks)) #    Cho frame và landmark tương ứng vào queue
-
+    landmark_queue.put(None) #  Using none as sentinel value
 
 #   Step 7
 def iris_localization(YAW_THD=45):
@@ -57,7 +71,10 @@ def iris_localization(YAW_THD=45):
     sio.connect("http://127.0.0.1:6789", namespaces='/kizuna')  #   Connect đến server frontend (Model)
 
     while True:
-        frame, preds = landmark_queue.get() #   Lấy frame và prediction tính được từ landmark queue
+        item = landmark_queue.get()
+        if item is None:
+            break
+        frame, preds = item #   Lấy frame và prediction tính được từ landmark queue
 
         for landmarks in preds: #   Với mỗi danh sách landmark được dự đoán trong predictions
             
@@ -111,14 +128,26 @@ def iris_localization(YAW_THD=45):
             sio.emit('result_data', result_string, namespace='/kizuna')
             upstream_queue.put((frame, landmarks, euler_angle))
             break
-
+    sio.disconnect()
+    upstream_queue.put(None)
 
 def draw(color=(125, 255, 0), thickness=2):
     sio = socketio.Client()
     sio.connect("http://127.0.0.1:6789", namespaces='/kizuna')
     
+    output_dir = 'NodeServer/output'
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    output_path = os.path.join(output_dir, 'output.avi')
+    out = cv2.VideoWriter(output_path, fourcc, fps, (960, 720))
+    
     while True:
-        frame, landmarks, euler_angle = upstream_queue.get()
+        item = upstream_queue.get()
+        if item is None:
+            break
+        frame, landmarks, euler_angle = item
 
         for p in np.round(landmarks).astype(np.int64):
             cv2.circle(frame, tuple(p), 1, color, thickness, cv2.LINE_AA)
@@ -127,17 +156,24 @@ def draw(color=(125, 255, 0), thickness=2):
         hp.draw_axis(frame, euler_angle, face_center)
 
         frame = cv2.resize(frame, (960, 720))
+        
+        out.write(frame)
 
         #enconde a frame
-        retval, buffer = cv2.imencode('.jpg', frame)
-        jpg_as_text = base64.b64encode(buffer)
+        # retval, buffer = cv2.imencode('.jpg', frame)
+        # jpg_as_text = base64.b64encode(buffer)
     
-        sio.emit('input_data', jpg_as_text, namespace='/kizuna')
+        # sio.emit('input_data', jpg_as_text, namespace='/kizuna')
+        
+        
         cv2.imshow('result', frame)
         
         if cv2.waitKey(1) & 0xFF == ord('q'):
+            stop_event.set()
+            sio.disconnect()
             break
         
+    sio.disconnect()
     cv2.destroyAllWindows()
 
 
@@ -156,5 +192,13 @@ draw_thread.start()
 
 face_detection() #  Step 1
 
+alignment_thread.join()
+iris_thread.join()
+draw_thread.join()
+
+alignment_thread.join()
+iris_thread.join()
+draw_thread.join()
+
 cap.release()
-cv2.destroyAllWindows()
+print('Done')
