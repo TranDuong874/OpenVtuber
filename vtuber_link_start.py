@@ -9,6 +9,7 @@ import base64
 import os
 from threading import Thread, Event
 from queue import Queue
+import json
 
 from threading import Thread
 from queue import Queue
@@ -22,6 +23,9 @@ fps = cap.get(cv2.CAP_PROP_FPS)
 width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
 height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
 
+model_control = {
+    "data" : []
+}
 
 
 fd = service.UltraLightFaceDetecion("weights/RFB-320.tflite",
@@ -124,12 +128,16 @@ def iris_localization(YAW_THD=45):
                              'mouth': mouth_open_percent,
                              'blink': (left_eye_status, right_eye_status)}
             
+            model_control['data'].append(result_string)
             
             sio.emit('result_data', result_string, namespace='/kizuna')
             upstream_queue.put((frame, landmarks, euler_angle))
             break
+        
     sio.disconnect()
     upstream_queue.put(None)
+
+
 
 def draw(color=(125, 255, 0), thickness=2):
     sio = socketio.Client()
@@ -139,10 +147,11 @@ def draw(color=(125, 255, 0), thickness=2):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
-    fourcc = cv2.VideoWriter_fourcc(*'XVID')
-    output_path = os.path.join(output_dir, 'output.avi')
+    fourcc = cv2.VideoWriter_fourcc(*'avc1')
+    output_path = os.path.join(output_dir, 'output.mp4')
     out = cv2.VideoWriter(output_path, fourcc, fps, (960, 720))
     
+    cnt = 0
     while True:
         item = upstream_queue.get()
         if item is None:
@@ -156,9 +165,10 @@ def draw(color=(125, 255, 0), thickness=2):
         hp.draw_axis(frame, euler_angle, face_center)
 
         frame = cv2.resize(frame, (960, 720))
-        
+        cnt += 1
         out.write(frame)
-
+        
+        print(fps)
         #enconde a frame
         # retval, buffer = cv2.imencode('.jpg', frame)
         # jpg_as_text = base64.b64encode(buffer)
@@ -174,6 +184,7 @@ def draw(color=(125, 255, 0), thickness=2):
             break
         
     sio.disconnect()
+    print('Frame count: ', cnt)
     cv2.destroyAllWindows()
 
 
@@ -200,5 +211,10 @@ alignment_thread.join()
 iris_thread.join()
 draw_thread.join()
 
+save_file = open('NodeServer/output/result_data.json', 'w')
+json.dump(model_control, save_file, indent=4)
+save_file.close()
+
+print('Param count: ', len(model_control['data']))
 cap.release()
 print('Done')
