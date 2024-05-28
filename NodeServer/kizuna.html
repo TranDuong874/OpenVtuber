@@ -15,12 +15,12 @@
 		<div id="divider"></div>
 		
 		<div id="video-container">
-			<video id="output-video" src="output/output.mp4" type="video/mp4" controls></video>
+			<video id="output-video" src="output/output.mp4" type="video/mp4" controls autoplay></video>
 		</div>
 	</div>
 	
 	<div id="editor">
-		<input type="range" min="0" max="100" value="0" id="frame-slider">
+
 	</div>
 
 	<script>
@@ -69,18 +69,15 @@
 		//		requestAnimationFrame(() => animate(result));
 		//	});
 
-		const frameSlider = document.getElementById('frame-slider');
+		var video = document.getElementById('output-video');
+		var frameRate = 29.826247343753653; 
 
-		// Add an event listener for the 'input' event
-		frameSlider.addEventListener('input', function() {
-			// Code to execute when the slider value changes
-			frame_index = parseInt(this.value);
-			if (frame_index > model_data.data.length - 1) frame_index =  model_data.data.length - 1;
-			requestAnimationFrame(() => animate(model_data.data[frame_index]));
+		video.addEventListener('timeupdate', function() {
+			var currentFrame = Math.floor(video.currentTime * frameRate);
+			console.log('Current frame: ' + video.currentTime);
+			requestAnimationFrame(() => animate(model_data.data[currentFrame]));
 		});
-
-		document.getElementById('frame-slider').max = model_data.data.length - 1;
-
+		
 
 		var clock = new THREE.Clock();
 

@@ -168,7 +168,7 @@ def draw(color=(125, 255, 0), thickness=2):
         cnt += 1
         out.write(frame)
         
-        # print(fps)
+        print(fps)
         #enconde a frame
         # retval, buffer = cv2.imencode('.jpg', frame)
         # jpg_as_text = base64.b64encode(buffer)
