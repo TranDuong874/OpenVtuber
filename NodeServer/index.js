@@ -1,19 +1,14 @@
-var app = require('http').createServer(handler)
-var io = require('socket.io')(app);
+var express = require('express');
+var app = express();
+var http = require('http').Server(app);
+var io = require('socket.io')(http);
 var fs = require('fs');
 
-function handler(req, res) {
-    fs.readFile(__dirname + req.url,
-        function (err, data) {
-            if (err) {
-                res.writeHead(500);
-                return res.end('Error loading index.html');
-            }
+app.use(express.static(__dirname)); // this will serve your static files
 
-            res.writeHead(200);
-            res.end(data);
-        });
-}
+app.get('/', function(req, res){
+    res.sendFile(__dirname + '/index.html');
+});
 
 io.of('/kizuna').on('connection', (socket) => {
     console.log('a kizuna client connected');
@@ -24,14 +19,7 @@ io.of('/kizuna').on('connection', (socket) => {
         }
     });
 
-    // socket.on('input_data', (input) => {
-    //     if (input) {
-    //         socket.broadcast.emit('input_download', input);
-    //         // console.log('Receiving data')
-    //     }
-    // });
-
     socket.on('disconnect', () => { console.log('a kizuna client disconnected') });
 });
 
-app.listen(6789, () => console.log('listening on http://127.0.0.1:6789/kizuna.html'));
+http.listen(6789, () => console.log('listening on http://127.0.0.1:6789/kizuna.html'));
