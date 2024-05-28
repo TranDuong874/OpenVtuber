@@ -147,7 +147,7 @@ def draw(color=(125, 255, 0), thickness=2):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
-    fourcc = cv2.VideoWriter_fourcc(*'avc1')
+    fourcc = cv2.VideoWriter_fourcc(*'H264')
     output_path = os.path.join(output_dir, 'output.mp4')
     out = cv2.VideoWriter(output_path, fourcc, fps, (960, 720))
     
@@ -168,7 +168,7 @@ def draw(color=(125, 255, 0), thickness=2):
         cnt += 1
         out.write(frame)
         
-        print(fps)
+        # print(fps)
         #enconde a frame
         # retval, buffer = cv2.imencode('.jpg', frame)
         # jpg_as_text = base64.b64encode(buffer)

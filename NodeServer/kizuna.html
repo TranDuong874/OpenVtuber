@@ -15,14 +15,33 @@
 		<div id="divider"></div>
 		
 		<div id="video-container">
-			<video id="output-video" type="video/mp4" controls autoplay></video>
+			<video id="output-video" src="output/output.mp4" type="video/mp4" controls></video>
 		</div>
 	</div>
 	
 	<div id="editor">
-
+		<input type="range" min="0" max="100" value="0" id="frame-slider">
 	</div>
 
+	<script>
+		var model_data;
+		
+		const getModelData = async () => {
+			try {
+				const res = await fetch("./output/result_data.json");
+				if (!res.ok) {
+					throw new Error(`Error ${res.status}`);
+				}
+				model_data = await res.json();
+				console.log(model_data);
+			} catch (error) {
+				console.log("Unable to fetch data", error);
+			}
+		}
+		
+		getModelData();
+	</script>
+		
 
 	<script src="https://cdn.jsdelivr.net/npm/socket.io-client@3.1.0/dist/socket.io.min.js"></script>
 
@@ -41,15 +60,27 @@
 		var mesh, camera, scene, renderer, effect;
 		var head, left_eye, right_eye;
 		var angle_const = 3.1415926 / 180;
+		var frame_index = 0;
 
-		var socket = io("http://127.0.0.1:6789/kizuna");
-		var websocketClose = () => socket.close();
+		//	var socket = io("http://127.0.0.1:6789/kizuna");
+		//	var websocketClose = () => socket.close();
 
-		socket.on('result_download', (result) => {
-			requestAnimationFrame(() => animate(result));
+		//	socket.on('result_download', (result) => {
+		//		requestAnimationFrame(() => animate(result));
+		//	});
+
+		const frameSlider = document.getElementById('frame-slider');
+
+		// Add an event listener for the 'input' event
+		frameSlider.addEventListener('input', function() {
+			// Code to execute when the slider value changes
+			frame_index = parseInt(this.value);
+			if (frame_index > model_data.data.length - 1) frame_index =  model_data.data.length - 1;
+			requestAnimationFrame(() => animate(model_data.data[frame_index]));
 		});
 
-		document.getElementById('output-video').src = '/output/output.mp4';
+		document.getElementById('frame-slider').max = model_data.data.length - 1;
+
 
 		var clock = new THREE.Clock();
 
