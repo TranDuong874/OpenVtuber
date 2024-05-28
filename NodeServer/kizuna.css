@@ -1,11 +1,4 @@
 body {
-    /* margin: 0;
-    background-color: #000;
-    color: #fff;
-    font-family: Monospace;
-    font-size: 13px;
-    line-height: 24px;
-    overscroll-behavior: none; */
     margin: 0;
     display: flex;
     height: 100vh;
@@ -14,27 +7,19 @@ body {
     font-family: Monospace;
     font-size: 13px;
     line-height: 24px;
-
-    display: flex;
     flex-direction: row;
 }
 
 canvas {
-    display: block;
+    display: contain;
 }
 #video-container {
-    width: 100%;
-    height: 100%;
+    height: 50%;
+    flex: 1;
 }
 #model-container {
-    width: 100%;
-    height: 100%;
-    position: relative;
-}
-video {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+    height: 50%;
+    flex: 1;
 }
 
 #display {
@@ -51,17 +36,8 @@ video {
     background-color: pink;
 }
 
-#divider {
-	width: 100%;
-	cursor: row-resize;
-	height: 8px;
-	background-color: #000;
-}
-
 #output-video {
-    min-width: none;
-    min-height: none;
     width: 100%;
-    height: auto;
-    display: block;
+    height: 100%;
+    object-fit: contain;
 }
